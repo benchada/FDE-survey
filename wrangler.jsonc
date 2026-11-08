@@ -11,7 +11,7 @@
     { "binding": "DB", "database_name": "fde-readiness", "database_id": "a6333541-5853-40fb-880c-a2208254b139" }
   ],
 
-  // Cloudflare Email Service (Email Sending). The FROM_EMAIL domain must be onboarded under Compute > Email Service > Email Sending.
+  // Fallback only: Cloudflare Email Service, used when the RESEND_API_KEY secret is not set.
   "send_email": [{ "name": "EMAIL" }],
 
   "vars": {

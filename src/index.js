@@ -1,12 +1,13 @@
 /**
  * FDE Field Readiness — Cloudflare Worker
  * GET  /                  the quiz page
- * POST /api/submit        saves the participant to D1 and emails their debrief (Cloudflare Email Service)
+ * POST /api/submit        saves the participant to D1 and emails their debrief
+ *                         (via Resend when RESEND_API_KEY is set, otherwise Cloudflare Email Service)
  * GET  /admin/export.csv  every response as CSV (needs ?key=ADMIN_KEY; disabled if ADMIN_KEY isn't set)
  *
- * Bindings (see wrangler.jsonc): DB (D1), EMAIL (send_email)
+ * Bindings (see wrangler.jsonc): DB (D1), EMAIL (send_email, fallback)
  * Variables: WORKSHOP_NAME, FROM_EMAIL, SENDER_NAME, REPLY_TO, FACILITATOR_BCC
- * Secret (optional): ADMIN_KEY
+ * Secrets: RESEND_API_KEY (recommended), ADMIN_KEY (optional)
  */
 
 let CONFIG = {};
@@ -232,6 +233,26 @@ export default {
   }
 };
 
+async function sendViaResend_(apiKey, email, name, msg) {
+  const body = {
+    from: CONFIG.SENDER_NAME + ' <' + CONFIG.FROM_EMAIL + '>',
+    to: [email],
+    subject: msg.subject, html: msg.html, text: msg.text
+  };
+  if (CONFIG.REPLY_TO) body.reply_to = CONFIG.REPLY_TO;
+  if (CONFIG.FACILITATOR_BCC) body.bcc = [CONFIG.FACILITATOR_BCC];
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    let detail = '';
+    try { const j = await res.json(); detail = j.message || j.name || ''; } catch (_) {}
+    throw new Error('Resend ' + res.status + (detail ? ': ' + detail : ''));
+  }
+}
+
 function userError(msg) { const e = new Error(msg); e.userMessage = msg; return e; }
 
 async function submit(form, env) {
@@ -258,14 +279,19 @@ async function submit(form, env) {
   try {
     if (!CONFIG.FROM_EMAIL) throw new Error('FROM_EMAIL is not set');
     const msg = buildEmail_(name, r);
-    const message = {
-      from: { email: CONFIG.FROM_EMAIL, name: CONFIG.SENDER_NAME },
-      to: { email, name },
-      subject: msg.subject, html: msg.html, text: msg.text
-    };
-    if (CONFIG.REPLY_TO) message.replyTo = CONFIG.REPLY_TO;
-    if (CONFIG.FACILITATOR_BCC) message.bcc = CONFIG.FACILITATOR_BCC;
-    await env.EMAIL.send(message);
+    if (env.RESEND_API_KEY) {
+      await sendViaResend_(env.RESEND_API_KEY, email, name, msg);
+    } else {
+      if (!env.EMAIL) throw new Error('No email service configured (set the RESEND_API_KEY secret)');
+      const message = {
+        from: { email: CONFIG.FROM_EMAIL, name: CONFIG.SENDER_NAME },
+        to: { email, name },
+        subject: msg.subject, html: msg.html, text: msg.text
+      };
+      if (CONFIG.REPLY_TO) message.replyTo = CONFIG.REPLY_TO;
+      if (CONFIG.FACILITATOR_BCC) message.bcc = CONFIG.FACILITATOR_BCC;
+      await env.EMAIL.send(message);
+    }
   } catch (e) {
     status = ('Not sent: ' + (e && e.message || e)).slice(0, 200);
     console.error('email failed', status);
