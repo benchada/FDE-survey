@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "fde-readiness",
+  "name": "fde-survey",
   "main": "src/index.js",
   "compatibility_date": "2026-10-15",
   "workers_dev": true,

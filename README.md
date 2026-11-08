@@ -16,7 +16,7 @@ npm install
 npx wrangler login
 npx wrangler deploy
 ```
-Wrangler prints your link, e.g. `https://fde-readiness.<your-subdomain>.workers.dev`.
+Wrangler prints your link, e.g. `https://fde-survey.<your-subdomain>.workers.dev`.
 
 ## Optional
 - **Download all responses as CSV:** `npx wrangler secret put ADMIN_KEY` (type any long password), then open `https://<your-link>/admin/export.csv?key=<that password>`.
