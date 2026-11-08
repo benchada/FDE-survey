@@ -1,0 +1,2 @@
+CREATE TABLE IF NOT EXISTS responses (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL DEFAULT (datetime('now')), workshop TEXT, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, consent INTEGER NOT NULL, pct INTEGER, level TEXT, xp INTEGER, s_code INTEGER, s_ai INTEGER, s_data INTEGER, s_discovery INTEGER, s_client INTEGER, s_ownership INTEGER, top_gap TEXT, email_status TEXT, answers TEXT);
+CREATE INDEX IF NOT EXISTS idx_responses_email_time ON responses(email, created_at);

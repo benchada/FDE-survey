@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "fde-readiness",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-15",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+
+  // Already created in your Cloudflare account
+  "d1_databases": [
+    { "binding": "DB", "database_name": "fde-readiness", "database_id": "a6333541-5853-40fb-880c-a2208254b139" }
+  ],
+
+  // Cloudflare Email Service (Email Sending). The FROM_EMAIL domain must be onboarded under Compute > Email Service > Email Sending.
+  "send_email": [{ "name": "EMAIL" }],
+
+  "vars": {
+    "WORKSHOP_NAME": "FDE Workshop",
+    "FROM_EMAIL": "debrief@entrogx.com",
+    "SENDER_NAME": "FDE Field Readiness",
+    "REPLY_TO": "chada@entrogx.com",
+    "FACILITATOR_BCC": ""
+  }
+
+  // Optional custom address, e.g. fde.entrogx.com — uncomment after deploying once:
+  // ,"routes": [{ "pattern": "fde.entrogx.com", "custom_domain": true }]
+}
